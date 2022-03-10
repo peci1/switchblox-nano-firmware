@@ -166,7 +166,6 @@ void Write_Commands_To_IC() {
 		MDIO_WAIT(1);
 	}
 	// */
-
 }
 
 
@@ -239,7 +238,22 @@ void Read_Eeprom_Data() {
 
 void Configuration_From_Eeprom() {
 	Read_Eeprom_Data();
+
+	// Disable all ports until the config is set (if there is at least one config value)
+	for(PHY = 2; PHY <= 7 && Commands_Total[0][0] != 0; PHY++) {
+		Data = MIIM_DRIVER_READ(PHY, 0);
+		Data = Data | 0x0800;
+		MIIM_DRIVER_WRITE(PHY, 0, Data);
+	}
+
 	Write_Commands_To_IC();
+
+	// Enable all ports after the config is set (if there is at least one config value)
+	for(PHY = 2; PHY <= 7 && Commands_Total[0][0] != 0; PHY++) {
+		Data = MIIM_DRIVER_READ(PHY, 0);
+		Data = Data & ~0x0800;
+		MIIM_DRIVER_WRITE(PHY, 0, Data);
+	}
 
 	// Reset each value in the Commands_Total array
 	for(Generic_Index = 0; Generic_Index < maximum_commands; Generic_Index++) {
